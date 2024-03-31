@@ -25,9 +25,15 @@ def neg_log_likelihood(data, theta, beta):
     # Implement the function as described in the docstring.             #
     #####################################################################
     log_lklihood = 0.
+    for user_id, question_id, is_correct in zip(data['user_id'], data['question_id'], data['is_correct']):
+        theta_i = theta[user_id]
+        beta_j = beta[question_id]
+        prob = sigmoid(theta_i - beta_j)
+        log_lklihood += np.log(prob) * is_correct + np.log(1 - prob) * (1 - is_correct)
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
+    print("log likelihood: ", log_lklihood)
     return -log_lklihood
 
 
@@ -52,10 +58,32 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    pass
+    # grad_theta = np.zeros_like(theta)
+    # grad_beta = np.zeros_like(beta)
+    # for user_id, question_id, is_correct in zip(data['user_id'], data['question_id'], data['is_correct']):
+    #     prob = sigmoid(theta[user_id] - beta[question_id])
+    #     grad_theta[user_id] += is_correct - prob
+    #     grad_beta[question_id] += -is_correct + prob
+    # theta = theta + lr * grad_theta
+    # beta = beta + lr * grad_beta
+    grad_theta = np.zeros_like(theta)
+    grad_beta = np.zeros_like(beta)
+
+    for user_id, question_id, is_correct in zip(data['user_id'], data['question_id'], data['is_correct']):
+        prob = sigmoid(theta[user_id] - beta[question_id])
+        grad_theta[user_id] += (is_correct - prob)
+    theta += lr * grad_theta
+    grad_theta.fill(0)
+
+    for user_id, question_id, is_correct in zip(data['user_id'], data['question_id'], data['is_correct']):
+        prob = sigmoid(theta[user_id] - beta[question_id])
+        grad_beta[question_id] += (-is_correct + prob)
+    beta += lr * grad_beta
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
+
     return theta, beta
 
 
@@ -73,8 +101,9 @@ def irt(data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    theta = None
-    beta = None
+    # 541 students 1773 questions
+    theta = np.zeros(541 + 1)
+    beta = np.zeros(1773 + 1)
 
     val_acc_lst = []
 
@@ -105,7 +134,10 @@ def evaluate(data, theta, beta):
         p_a = sigmoid(x)
         pred.append(p_a >= 0.5)
     return np.sum((data["is_correct"] == np.array(pred))) \
-           / len(data["is_correct"])
+        / len(data["is_correct"])
+
+
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -120,7 +152,7 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    pass
+    theta, beta, val_acc_list = irt(train_data, val_data, 0.005, 50)
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -129,7 +161,32 @@ def main():
     # TODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    pass
+    j1 = 1525
+    j2 = 1574
+    j3 = 1030
+    beta_j1 = beta[j1]
+    beta_j2 = beta[j2]
+    beta_j3 = beta[j3]
+    print("the difficulty of j1 j2 j3 are", beta_j1, beta_j2, beta_j3)
+
+    theta_range = np.linspace(-3, 3, 100)
+
+    prob_j1 = sigmoid(theta_range - beta_j1)
+    prob_j2 = sigmoid(theta_range - beta_j2)
+    prob_j3 = sigmoid(theta_range - beta_j3)
+
+    plt.plot(theta_range, prob_j1, label='Question $j_1$')
+    plt.plot(theta_range, prob_j2, label='Question $j_2$')
+    plt.plot(theta_range, prob_j3, label='Question $j_3$')
+
+    plt.legend()
+
+    plt.xlabel('Ability $\\theta$')
+    plt.ylabel('Probability of Correct Response $p(c_{ij} = 1)$')
+    plt.title('Probability of Correct Response vs. Ability')
+
+    plt.grid(True)
+    plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
