@@ -104,7 +104,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     num_student = train_data.shape[0]
 
     train_losses = []
-    valid_accuracies = []
+    valid_accs = []
 
     for epoch in range(0, num_epoch):
         train_loss = 0.
@@ -145,9 +145,9 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
         # print(test_acc)
 
         train_losses.append(train_loss)
-        valid_accuracies.append(valid_acc)
+        valid_accs.append(valid_acc)
 
-    return train_losses, valid_accuracies
+    return train_losses, valid_accs
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -277,7 +277,7 @@ def main():
         # Set optimization hyperparameters.
         lr = 0.05
         num_epoch = 10
-        lamb = None
+        lamb = 0.001
 
         train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
               valid_data, num_epoch)
