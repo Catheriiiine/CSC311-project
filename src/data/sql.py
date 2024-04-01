@@ -62,15 +62,34 @@ question_subject = pd.read_csv('question_subject.csv')
 question_subject.to_sql('question_subject', conn, index=False, if_exists='replace')
 
 
-query = ("""
+query1 = ("""
         SELECT *
-        FROM question_subject q join train_data t on q.question_id = t.question_id;
+        FROM question_subject natural join train_data t;
         """)
 
-df_query_result = pd.read_sql_query(query, conn)
+query2 = ("""
+        SELECT *
+        FROM question_subject natural join valid_data t;
+        """)
+
+query3 = ("""
+        SELECT *
+        FROM question_subject natural join test_data t;
+        """)
+
+train_data = pd.read_sql_query(query1, conn)
+valid_data = pd.read_sql_query(query2, conn)
+test_data = pd.read_sql_query(query3, conn)
 
 # Process the query result
-print(df_query_result.head())
+print(train_data.head())
+print(valid_data.head())
+print(test_data.head())
+
+train_data.to_csv('new_train_data.csv', index=False)
+valid_data.to_csv('new_valid_data.csv', index=False)
+test_data.to_csv('new_test_data.csv', index=False)
+
 
 # Close the connection
 conn.close()
