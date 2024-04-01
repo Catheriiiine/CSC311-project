@@ -8,9 +8,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import torch
-
-#from src.utils import load_train_sparse, load_valid_csv, load_public_test_csv
-
+import matplotlib.pyplot as plt
 
 def load_data(base_path="../data"):
     """ Load the data in PyTorch Tensor.
@@ -96,7 +94,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     :param num_epoch: int
     :return: None
     """
-    # TODO: Add a regularizer to the cost function. 
+    # TODO: Add a regularizer to the cost function.
 
     # Tell PyTorch you are training the model.
     model.train()
@@ -106,7 +104,8 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     num_student = train_data.shape[0]
 
     train_losses = []
-    valid_accs = []
+    valid_accuracies = []
+
     for epoch in range(0, num_epoch):
         train_loss = 0.
 
@@ -118,8 +117,8 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             output = model(inputs)
 
             # Mask the target to only compute the gradient of valid entries.
+            # nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             nan_mask = np.isnan(train_data[user_id].numpy())
-            #nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
             loss = torch.sum((output - target) ** 2.)
@@ -133,6 +132,8 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
 
             train_loss += total_loss.item()
             optimizer.step()
+
+
         valid_acc = evaluate(model, zero_train_data, valid_data)
         train_losses.append(train_loss)
         valid_accs.append(valid_acc)
@@ -140,10 +141,74 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
 
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
-    return train_losses, valid_accs
+        # test_acc = evaluate(model, zero_train_data, valid_data)
+        # print(test_acc)
+
+        train_losses.append(train_loss)
+        valid_accuracies.append(valid_acc)
+
+    return train_losses, valid_accuracies
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
+
+# def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
+#     """ Train the neural network, where the objective also includes
+#     a regularizer.
+#
+#     :param model: Module
+#     :param lr: float
+#     :param lamb: float
+#     :param train_data: 2D FloatTensor
+#     :param zero_train_data: 2D FloatTensor
+#     :param valid_data: Dict
+#     :param num_epoch: int
+#     :return: None
+#     """
+#     # TODO: Add a regularizer to the cost function.
+#
+#     # Tell PyTorch you are training the model.
+#     model.train()
+#
+#     # Define optimizers and loss function.
+#     optimizer = optim.SGD(model.parameters(), lr=lr)
+#     num_student = train_data.shape[0]
+#
+#
+#     for epoch in range(0, num_epoch):
+#         train_loss = 0.
+#
+#         for user_id in range(num_student):
+#             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
+#             target = inputs.clone()
+#
+#             optimizer.zero_grad()
+#             output = model(inputs)
+#
+#             # Mask the target to only compute the gradient of valid entries.
+#             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
+#             target[0][nan_mask] = output[0][nan_mask]
+#
+#             loss = torch.sum((output - target) ** 2.)
+#
+#             # Regularization term: λ/2 * (||W1||^2 + ||W2||^2)
+#             # Get the weight norm from the model's method and add it to the loss
+#             reg_loss = lamb * model.get_weight_norm() / 2
+#
+#             # The total loss is the sum of the prediction loss and the regularization loss
+#             total_loss = loss + reg_loss
+#
+#             total_loss.backward()
+#
+#             train_loss += total_loss.item()
+#             optimizer.step()
+#
+#         valid_acc = evaluate(model, zero_train_data, valid_data)
+#         print("Epoch: {} \tTraining Cost: {:.6f}\t "
+#               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
+#     #####################################################################
+#     #                       END OF YOUR CODE                            #
+#     #####################################################################
 
 def evaluate(model, train_data, valid_data):
     """ Evaluate the valid_data on the current model.
@@ -200,27 +265,46 @@ def main():
     # Try out 5 different k and select the best k using the             #
     # validation set.                                                   #
     #####################################################################
-    # Set model hyperparameters.
-    num_question = train_matrix.shape[1]
-    k = 50
-    model = AutoEncoder(num_question, k)
-    # Set optimization hyperparameters.
-    lr = 0.05
-    num_epoch = 10
-    lamb = 0.001
+    training_costs = {}
+    validation_accuracies = {}
 
-    train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
-      valid_data, num_epoch)
+    for k in [10, 50, 100, 200, 500]:
+    # for lamb in [0.001, 0.01, 0.1, 1]:
+        # Set model hyperparameters.
+        # k = 50
+        model = AutoEncoder(train_matrix.shape[1], k)
 
-    plot_training_results(train_losses, valid_accs)
+        # Set optimization hyperparameters.
+        lr = 0.05
+        num_epoch = 10
+        lamb = None
 
-    #print("finished\n")
-    test_acc = evaluate(model, zero_train_matrix, test_data)
-    #print("test_acc: {}".format(test_acc))
-    print("test_acc: {}".format(test_acc), "valid_acc: {}".format(valid_accs[-1]))
+        train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
+              valid_data, num_epoch)
+        training_costs[k] = train_losses
+        validation_accuracies[k] = valid_accs
 
+    # Plotting
+    epochs = list(range(1, num_epoch + 1))
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
 
+    # Plot training cost
+    for k, costs in training_costs.items():
+        axes[0].plot(epochs, costs, marker='o', label=f'k={k}')
+    axes[0].set_title('Training Cost per Epoch')
+    axes[0].set_ylabel('Training Cost')
+    axes[0].legend()
 
+    # Plot validation accuracy
+    for k, accuracies in validation_accuracies.items():
+        axes[1].plot(epochs, accuracies, marker='o', label=f'k={k}')
+    axes[1].set_title('Validation Accuracy per Epoch')
+    axes[1].set_xlabel('Epoch')
+    axes[1].set_ylabel('Validation Accuracy')
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
