@@ -1,5 +1,4 @@
 from scipy.sparse import load_npz
-
 import numpy as np
 import csv
 import os
