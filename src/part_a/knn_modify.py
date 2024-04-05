@@ -114,12 +114,24 @@ if __name__ == '__main__':
     valid_data = pd.read_csv(validation_data_path)
     valid_target_data = pd.read_csv(valid_target_path)
 
+    test_data = pd.read_csv(test_data_path)
+    test_target_data = pd.read_csv(test_target_path)
+
     X_train = train_data.sort_values(by='user_id').drop(columns=['user_id']).values
     t_train = train_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
 
     X_valid = valid_data.sort_values(by='user_id').drop(columns=['user_id']).values
     t_valid = valid_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
+
+    X_test = test_data.sort_values(by='user_id').drop(columns=['user_id']).values
+    t_test = test_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
+
+    print('Train accuracy at k = 1 (should be 1): ')
+    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
+    print('Validation accuracy at k = 250: ')
     print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=250))
+    print('Test accuracy at k = 250: ')
+    print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=250))
 
 
 
