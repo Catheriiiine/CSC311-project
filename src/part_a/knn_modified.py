@@ -16,17 +16,19 @@ def sparse_matrix_evaluate(data, matrix, threshold=0.5):
     :param threshold: float
     :return: float
     """
-    total_prediction = 0
+    total_predictions = 0
     total_accurate = 0
-    for i in range(len(data["is_correct"])):
-        cur_user_id = data["user_id"][i]
-        cur_question_id = data["question_id"][i]
-        if matrix[cur_user_id, cur_question_id] >= threshold and data["is_correct"][i]:
-            total_accurate += 1
-        if matrix[cur_user_id, cur_question_id] < threshold and not data["is_correct"][i]:
-            total_accurate += 1
-        total_prediction += 1
-    return total_accurate / float(total_prediction)
+
+    # Assuming data and matrix have the same shape and correspond to each other
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            actual = data.iloc[i, j] >= threshold
+            prediction = matrix[i, j] >= threshold
+            if actual == prediction:
+                total_accurate += 1
+            total_predictions += 1
+
+    return total_accurate / float(total_predictions)
 
 def knn_impute_by_user(matrix, valid_data, k):
     """ Fill in the missing values using k-Nearest Neighbors based on
@@ -75,11 +77,10 @@ def main():
 
     # Now, predicted_labels contains the predicted labels for each user in val_data
 
-    print("Sparse matrix:")
-    print(sparse_matrix)
-    print("Shape of sparse matrix:")
-    print(sparse_matrix.shape)
-
+    # print("Sparse matrix:")
+    # print(sparse_matrix)
+    # print("Shape of sparse matrix:")
+    # print(sparse_matrix.shape)
 
     user_validation_accuracies = []
 
