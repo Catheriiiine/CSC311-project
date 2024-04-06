@@ -158,34 +158,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # Part A 1(b)
-    print("Part A: 1(b): The underlying assumption on item-based collaborative"
-          " filtering: the if question A is answered correctly (or incorrectly)"
-          " by users in the same manner as question B, then the correctness of"
-          " answers to question A can predict the correctness of answers to"
-          " question B.")
-
-    # Part A 1(d)
-    print("Part A: 1(d): User-based collaborative filtering is better, "
-          "since Test Accuracy of the best user-based k-NN with k = 11 is "
-          "0.6841659610499576, which is bigger than the Test Accuracy of best "
-          "item-based k-NN with k=26: 0.6528365791701948.")
-
-    # Part A 1(e):
-    # first limitation
-    print("The initial limitation involves scalability issues. "
-          "As the dataset expands, k-NN's effectiveness declines. Within the "
-          "educational data realm, where there might be an enormous count of "
-          "both students (users) and questions (items), kNN could prove to be "
-          "unfeasible because it requires calculating the distance between "
-          "every point pair for prediction. This problem is especially "
-          "critical in real-time systems where quick feedback is essential")
-    # second limitation
-    print("The second major limitation is computational efficiency."
-          "The requirement for the algorithm to retain the full training "
-          "dataset for making predictions, coupled with the intensive "
-          "computational demand of determining distances between a query "
-          "point and every other point, especially when the question count "
-          "is high, poses a significant challenge. Sparse data, characterized "
-          "by a majority of missing entries, intensifies this issue, leading "
-          "to the need for extra measures to handle the sparsity effectively.")
