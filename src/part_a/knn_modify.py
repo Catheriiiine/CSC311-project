@@ -57,9 +57,10 @@ def predict_knn(v, X_train, t_train, k=30):
     valid_columns_means = np.nanmean(ts[:, not_all_nan_columns], axis=0)
     means[not_all_nan_columns] = valid_columns_means
 
-    means = np.nan_to_num(means, nan=0.5)
-    most_common_values = np.round(means).astype(int)
-    prediction = most_common_values
+    #means = np.nan_to_num(means, nan=nan)
+    means[not_all_nan_columns] = np.round(means[not_all_nan_columns]).astype(int)
+    #most_common_values = np.round(means).astype(int)
+    prediction = means
     return prediction
 
 def compute_accuracy(X_new, t_new, X_train, t_train, k=1):
@@ -90,8 +91,6 @@ def compute_accuracy(X_new, t_new, X_train, t_train, k=1):
         t = t_new[i] # prediction target
         y = predict_knn(v, X_train, t_train, k=k)
         for j in range(len(y)):
-            if y[j] != 0 and y[j] != 1:
-                continue
             if t[j] != 0 and t[j] != 1:
                 continue
             num_predictions += 1
