@@ -1,10 +1,10 @@
 from utils import *
 from torch.autograd import Variable
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
-import matplotlib.pyplot as plt
 
 import numpy as np
 import torch
@@ -66,13 +66,9 @@ class AutoEncoder(nn.Module):
         :return: user vector.
         """
         #####################################################################
-        #                                                              #
+        # TODO:                                                             #
         # Implement the function as described in the docstring.             #
         # Use sigmoid activations for f and g.                              #
-        # v = self.g(inputs)
-        # w = F.sigmoid(v)
-        # h = self.h(w)
-        # f = F.sigmoid(h)
         #####################################################################
         out = F.sigmoid(self.h(F.sigmoid(self.g(inputs))))
         #####################################################################
@@ -104,7 +100,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     num_student = train_data.shape[0]
 
     train_losses = []
-    valid_accs = []
+    valid_accuracies = []
 
     for epoch in range(0, num_epoch):
         train_loss = 0.
@@ -122,32 +118,22 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             target[0][nan_mask] = output[0][nan_mask]
 
             loss = torch.sum((output - target) ** 2.)
-            # Regularization term: λ/2 * (||W1||^2 + ||W2||^2)
-            # Get the weight norm from the model's method and add it to the loss
-            reg_loss = lamb * model.get_weight_norm() / 2
-            # The total loss is the sum of the prediction loss and the regularization loss
-            total_loss = loss + reg_loss
+            loss.backward()
 
-            total_loss.backward()
-
-            train_loss += total_loss.item()
+            train_loss += loss.item()
             optimizer.step()
 
 
         valid_acc = evaluate(model, zero_train_data, valid_data)
-        train_losses.append(train_loss)
-        valid_accs.append(valid_acc)
-
-
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
-        # test_acc = evaluate(model, zero_train_data, valid_data)
-        # print(test_acc)
+        test_acc = evaluate(model, zero_train_data, valid_data)
+        print(test_acc)
 
         train_losses.append(train_loss)
-        valid_accs.append(valid_acc)
+        valid_accuracies.append(valid_acc)
 
-    return train_losses, valid_accs
+    return train_losses, valid_accuracies
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -235,28 +221,6 @@ def evaluate(model, train_data, valid_data):
         total += 1
     return correct / float(total)
 
-
-def plot_training_results(train_losses, valid_accs):
-    epochs = range(1, len(train_losses) + 1)
-    plt.figure(figsize=(10, 5))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, train_losses, label='Training Loss')
-    plt.title('Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, valid_accs, label='Validation Accuracy', color='orange')
-    plt.title('Validation Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-
-    plt.tight_layout()
-    plt.show()
-
 def main():
     zero_train_matrix, train_matrix, valid_data, test_data = load_data()
 
@@ -267,22 +231,41 @@ def main():
     #####################################################################
     training_costs = {}
     validation_accuracies = {}
+    max = 0
+    max_k = 0
+    max_lr = 0
+    max_num = 0
 
-    for k in [10, 50, 100, 200, 500]:
-    # for lamb in [0.001, 0.01, 0.1, 1]:
-        # Set model hyperparameters.
-        # k = 50
-        model = AutoEncoder(train_matrix.shape[1], k)
+    for num_epoch in [5, 11, 15, 20]:
+        #print("For num_epoch = {}".format(num_epoch))
+        for lr in [0.01, 0.05, 0.1]:
+            #print("For lr = {}".format(lr))
+            for k in [10, 50, 100, 200, 500]:
+                # for lamb in [0.001, 0.01, 0.1, 1]:
+                # Set model hyperparameters.
+                # k = 50
+                model = AutoEncoder(train_matrix.shape[1], k)
 
-        # Set optimization hyperparameters.
-        lr = 0.05
-        num_epoch = 10
-        lamb = 0.001
+                # Set optimization hyperparameters.
+                # lr = 0.05
+                # num_epoch = 10
+                lamb = 0
 
-        train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
-              valid_data, num_epoch)
-        training_costs[k] = train_losses
-        validation_accuracies[k] = valid_accs
+                #print("For k = {}".format(k))
+                train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
+                      valid_data, num_epoch)
+                training_costs[k] = train_losses
+                validation_accuracies[k] = valid_accs
+                if validation_accuracies[k][-1] > max:
+                    max = validation_accuracies[k][-1]
+                    max_k = k
+                    max_lr = lr
+                    max_num = num_epoch
+    print("Maximam validation accuracy is: {}".format(max))
+    print("When k is: {}".format(max_k))
+    print("When lr is: {}".format(max_lr))
+    print("When number of epoch is: {}".format(max_num))
+
 
     # Plotting
     epochs = list(range(1, num_epoch + 1))

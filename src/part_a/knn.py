@@ -99,7 +99,7 @@ def main():
 
     # Part A 1(a)
     # Define k values to test
-    k_values = [1, 6, 11, 16, 21, 26]
+    k_values = [1, 6, 11, 16, 21, 26, 250]
     user_validation_accuracies = []
 
     # Compute the validation accuracy for each k
