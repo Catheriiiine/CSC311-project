@@ -77,6 +77,67 @@ class AutoEncoder(nn.Module):
         return out
 
 
+# def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
+#     """ Train the neural network, where the objective also includes
+#     a regularizer.
+#
+#     :param model: Module
+#     :param lr: float
+#     :param lamb: float
+#     :param train_data: 2D FloatTensor
+#     :param zero_train_data: 2D FloatTensor
+#     :param valid_data: Dict
+#     :param num_epoch: int
+#     :return: None
+#     """
+#     # TODO: Add a regularizer to the cost function.
+#
+#     # Tell PyTorch you are training the model.
+#     model.train()
+#
+#     # Define optimizers and loss function.
+#     optimizer = optim.SGD(model.parameters(), lr=lr)
+#     num_student = train_data.shape[0]
+#
+#     train_losses = []
+#     valid_accuracies = []
+#
+#     for epoch in range(0, num_epoch):
+#         train_loss = 0.
+#
+#         for user_id in range(num_student):
+#             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
+#             target = inputs.clone()
+#
+#             optimizer.zero_grad()
+#             output = model(inputs)
+#
+#             # Mask the target to only compute the gradient of valid entries.
+#             # nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
+#             nan_mask = np.isnan(train_data[user_id].numpy())
+#             target[0][nan_mask] = output[0][nan_mask]
+#
+#             loss = torch.sum((output - target) ** 2.)
+#             loss.backward()
+#
+#             train_loss += loss.item()
+#             optimizer.step()
+#
+#
+#         valid_acc = evaluate(model, zero_train_data, valid_data)
+#         print("Epoch: {} \tTraining Cost: {:.6f}\t "
+#               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
+#         # test_acc = evaluate(model, zero_train_data, test_data)
+#         # print(test_acc)
+#
+#         train_losses.append(train_loss)
+#         valid_accuracies.append(valid_acc)
+#
+#     return train_losses, valid_accuracies
+    #####################################################################
+    #                       END OF YOUR CODE                            #
+    #####################################################################
+
 def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     """ Train the neural network, where the objective also includes
     a regularizer.
@@ -102,6 +163,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     train_losses = []
     valid_accuracies = []
 
+
     for epoch in range(0, num_epoch):
         train_loss = 0.
 
@@ -113,85 +175,31 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             output = model(inputs)
 
             # Mask the target to only compute the gradient of valid entries.
-            # nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             nan_mask = np.isnan(train_data[user_id].numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
             loss = torch.sum((output - target) ** 2.)
-            loss.backward()
 
-            train_loss += loss.item()
+            # Regularization term: λ/2 * (||W1||^2 + ||W2||^2)
+            # Get the weight norm from the model's method and add it to the loss
+            reg_loss = lamb * model.get_weight_norm() / 2
+
+            # The total loss is the sum of the prediction loss and the regularization loss
+            total_loss = loss + reg_loss
+
+            total_loss.backward()
+
+            train_loss += total_loss.item()
             optimizer.step()
-
 
         valid_acc = evaluate(model, zero_train_data, valid_data)
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
-        test_acc = evaluate(model, zero_train_data, valid_data)
-        print(test_acc)
-
         train_losses.append(train_loss)
         valid_accuracies.append(valid_acc)
 
     return train_losses, valid_accuracies
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
-# def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
-#     """ Train the neural network, where the objective also includes
-#     a regularizer.
-#
-#     :param model: Module
-#     :param lr: float
-#     :param lamb: float
-#     :param train_data: 2D FloatTensor
-#     :param zero_train_data: 2D FloatTensor
-#     :param valid_data: Dict
-#     :param num_epoch: int
-#     :return: None
-#     """
-#     # TODO: Add a regularizer to the cost function.
-#
-#     # Tell PyTorch you are training the model.
-#     model.train()
-#
-#     # Define optimizers and loss function.
-#     optimizer = optim.SGD(model.parameters(), lr=lr)
-#     num_student = train_data.shape[0]
-#
-#
-#     for epoch in range(0, num_epoch):
-#         train_loss = 0.
-#
-#         for user_id in range(num_student):
-#             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
-#             target = inputs.clone()
-#
-#             optimizer.zero_grad()
-#             output = model(inputs)
-#
-#             # Mask the target to only compute the gradient of valid entries.
-#             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
-#             target[0][nan_mask] = output[0][nan_mask]
-#
-#             loss = torch.sum((output - target) ** 2.)
-#
-#             # Regularization term: λ/2 * (||W1||^2 + ||W2||^2)
-#             # Get the weight norm from the model's method and add it to the loss
-#             reg_loss = lamb * model.get_weight_norm() / 2
-#
-#             # The total loss is the sum of the prediction loss and the regularization loss
-#             total_loss = loss + reg_loss
-#
-#             total_loss.backward()
-#
-#             train_loss += total_loss.item()
-#             optimizer.step()
-#
-#         valid_acc = evaluate(model, zero_train_data, valid_data)
-#         print("Epoch: {} \tTraining Cost: {:.6f}\t "
-#               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
 #     #####################################################################
 #     #                       END OF YOUR CODE                            #
 #     #####################################################################
@@ -231,40 +239,46 @@ def main():
     #####################################################################
     training_costs = {}
     validation_accuracies = {}
+    test_accuracies = {}
     max = 0
     max_k = 0
     max_lr = 0
     max_num = 0
+    test_acc = 0
 
-    for num_epoch in [5, 11, 15, 20]:
-        #print("For num_epoch = {}".format(num_epoch))
-        for lr in [0.01, 0.05, 0.1]:
-            #print("For lr = {}".format(lr))
-            for k in [10, 50, 100, 200, 500]:
-                # for lamb in [0.001, 0.01, 0.1, 1]:
-                # Set model hyperparameters.
-                # k = 50
-                model = AutoEncoder(train_matrix.shape[1], k)
+    # for num_epoch in [5, 11, 15, 20]:
+    #     #print("For num_epoch = {}".format(num_epoch))
+    #     for lr in [0.01, 0.05, 0.1]:
+    #         #print("For lr = {}".format(lr))
+    #         for k in [10, 50, 100, 200, 500]:
+    k = 50
+    lr = 0.05
+    num_epoch = 11
+    max_lamb = 0
+    for lamb in (0.001, 0.01, 0.1, 1):
+        model = AutoEncoder(train_matrix.shape[1], k)
 
-                # Set optimization hyperparameters.
-                # lr = 0.05
-                # num_epoch = 10
-                lamb = 0
+        # Set optimization hyperparameters.
+            #print("For k = {}".format(k))
+        train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
+              valid_data, num_epoch)
 
-                #print("For k = {}".format(k))
-                train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
-                      valid_data, num_epoch)
-                training_costs[k] = train_losses
-                validation_accuracies[k] = valid_accs
-                if validation_accuracies[k][-1] > max:
-                    max = validation_accuracies[k][-1]
-                    max_k = k
-                    max_lr = lr
-                    max_num = num_epoch
+        training_costs[k] = train_losses
+        validation_accuracies[k] = valid_accs
+        test_accuracies[k] = evaluate(model, zero_train_matrix, test_data)
+        if validation_accuracies[k][-1] > max:
+            max = validation_accuracies[k][-1]
+            max_lamb = lamb
+            # max_k = k
+            # max_lr = lr
+            # max_num = num_epoch
+            test_acc = test_accuracies[k]
     print("Maximam validation accuracy is: {}".format(max))
-    print("When k is: {}".format(max_k))
-    print("When lr is: {}".format(max_lr))
-    print("When number of epoch is: {}".format(max_num))
+    print("When test accuracy is: {}".format(test_acc))
+    print("When lamb is: {}".format(max_lamb))
+    # print("When k is: {}".format(max_k))
+    # print("When lr is: {}".format(max_lr))
+    # print("When number of epoch is: {}".format(max_num))
 
 
     # Plotting
