@@ -127,6 +127,8 @@ if __name__ == '__main__':
 
     print('Train accuracy at k = 1 (should be 1): ')
     print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
+    print('Train accuracy at k = 250: ')
+    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=250))
     print('Validation accuracy at k = 250: ')
     print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=250))
     print('Test accuracy at k = 250: ')
