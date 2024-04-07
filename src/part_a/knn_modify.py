@@ -96,9 +96,12 @@ def compute_accuracy(X_new, t_new, X_train, t_train, k=1):
         for j in range(len(t)):
             if t.iloc[j] != 0 and t.iloc[j] != 1:
                 continue
-            num_predictions += 1
+
             if y[j] == t.iloc[j]:
                 num_correct += 1
+                num_predictions += 1
+            if (y[j] - t.iloc[j]) == 1 or (y[j] - t.iloc[j]) == -1:
+                num_predictions += 1
 
     return num_correct / num_predictions
 
@@ -128,14 +131,31 @@ if __name__ == '__main__':
     X_test = test_data.sort_values(by='user_id')
     t_test = test_target_data.sort_values(by='user_id')
 
-    # print('Train accuracy at k = 1 (should be 1): ')
-    # print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
-    # print('Train accuracy at k = 250: ')
-    # print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=230))
-    print('Validation accuracy at k = 250: ')
-    print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=230))
-    print('Test accuracy at k = 250: ')
-    print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=230))
+    print('Train accuracy at k = 1 (should be 1): ')
+    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
+    print('Train accuracy at k = 6: ')
+    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=6))
+    print('Validation accuracy at k = 6: ')
+    print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=6))
+    # print('Validation accuracy at k = 11: ')
+    # print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=11))
+    # print('Validation accuracy at k = 16: ')
+    # print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=16))
+    # print('Validation accuracy at k = 21: ')
+    # print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=21))
+    # print('Validation accuracy at k = 26: ')
+    # print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=26))
+
+    print('Test accuracy at k = 6: ')
+    print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=6))
+    # print('Test accuracy at k = 11: ')
+    # print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=11))
+    # print('Test accuracy at k = 16: ')
+    # print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=16))
+    # print('Test accuracy at k = 21: ')
+    # print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=21))
+    # print('Test accuracy at k = 26: ')
+    # print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=26))
 
 
 
