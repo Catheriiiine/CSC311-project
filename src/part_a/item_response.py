@@ -33,7 +33,6 @@ def neg_log_likelihood(data, theta, beta):
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
-    print("log likelihood: ", log_lklihood)
     return -log_lklihood
 
 
@@ -100,21 +99,46 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta.
     # 541 students 1773 questions
     theta = np.zeros(541 + 1)
     beta = np.zeros(1773 + 1)
 
     val_acc_lst = []
 
+    train_lld_lst = []
+    valid_lld_lst = []
+
     for i in range(iterations):
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+
+        train_lld_lst.append(-neg_lld)
+        valid_lld_lst.append(-neg_log_likelihood(val_data, theta=theta, beta=beta))
+
         score = evaluate(data=val_data, theta=theta, beta=beta)
         val_acc_lst.append(score)
         print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
-    # TODO: You may change the return values to achieve what you want.
+
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_lld_lst, label='Trailing Log Likelihood')
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Log Likelihood')
+    plt.title('Log Likelihood over Iterations')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(valid_lld_lst, label='Validation Log Likelihood')
+    plt.xlabel('Iteration')
+    plt.ylabel('Log Likelihood')
+    plt.title('Log Likelihood over Iterations')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
     return theta, beta, val_acc_lst
 
 
@@ -152,7 +176,9 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    theta, beta, val_acc_list = irt(train_data, val_data, 0.005, 50)
+    theta, beta, val_acc_list = irt(train_data, val_data, 0.005, 100)
+
+    print("Final validation accuracy: {}\nFinal test accuracy: {}".format(evaluate(data=val_data, theta=theta, beta=beta),evaluate(data=test_data, theta=theta, beta=beta)))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -168,7 +194,6 @@ def main():
     beta_j2 = beta[j2]
     beta_j3 = beta[j3]
     print("the difficulty of j1 j2 j3 are", beta_j1, beta_j2, beta_j3)
-
     theta_range = np.linspace(-3, 3, 100)
 
     prob_j1 = sigmoid(theta_range - beta_j1)
