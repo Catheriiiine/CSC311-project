@@ -164,7 +164,7 @@ def main():
     print(f"Best k for item-based k-NN: {best_k}")
 
     # Report the test accuracy with the chosen k*
-    test_accuracy = knn_impute_by_user(sparse_matrix, test_data, best_k)
+    test_accuracy = knn_impute_by_item(sparse_matrix, test_data, best_k)
     print(
         f"Item-based Best k-NN Test Accuracy with k={best_k}: {test_accuracy}")
 
