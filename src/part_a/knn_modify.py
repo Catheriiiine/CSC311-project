@@ -16,13 +16,14 @@ def dist_all(v, X):
     user in the data matrix `X`.
 
     """
-
+    X = X.drop(columns=['user_id']).values
+    v = v.drop(columns=['user_id']).values
     diff = X - v
     sqdiff = np.square(diff)
-    sumval = np.sum(sqdiff, axis = 1)
+    sumval = np.sum(sqdiff, axis=1)
     return sumval
 
-def predict_knn(v, X_train, t_train, k=30):
+def predict_knn(user_id, X_train, t_train, k=30):
     """
     Returns a prediction using the k-NN
 
@@ -36,8 +37,10 @@ def predict_knn(v, X_train, t_train, k=30):
     Returns:
         A single number `i` between 0 and 9, representing the digit
     """
+
     # Step 1. compute the distances between v and every element of X
-    dists = dist_all(v, X_train)
+    mask = X_train.iloc[:, 0] == user_id
+    dists = dist_all(X_train.loc[mask], X_train)
 
     # Step 2. find the indices of the k-nearest neighbours
 
@@ -51,15 +54,15 @@ def predict_knn(v, X_train, t_train, k=30):
 
     # Step 3. find the most common target label amongst these indices
 
-    ts = t_train[np.array(indices)]
+    ts = t_train.loc[np.array(indices)]
     not_all_nan_columns = ~np.isnan(ts).all(axis=0)
     means = np.full(ts.shape[1], np.nan)
-    valid_columns_means = np.nanmean(ts[:, not_all_nan_columns], axis=0)
+    valid_columns_means = np.nanmean(ts.loc[:, not_all_nan_columns], axis=0)
     means[not_all_nan_columns] = valid_columns_means
 
     #means = np.nan_to_num(means, nan=nan)
-    means[not_all_nan_columns] = np.round(means[not_all_nan_columns]).astype(int)
-    #most_common_values = np.round(means).astype(int)
+    #means[not_all_nan_columns] = np.round(means[not_all_nan_columns]).astype(int)
+    means[not_all_nan_columns] = np.where(means[not_all_nan_columns] >= 0.5, 1, 0)
     prediction = means
     return prediction
 
@@ -85,16 +88,16 @@ def compute_accuracy(X_new, t_new, X_train, t_train, k=1):
 
     num_predictions = 0
     num_correct = 0
-
     for i in range(X_new.shape[0]): # iterate over each image index in X_new
-        v = X_new[i] # image vector
-        t = t_new[i] # prediction target
-        y = predict_knn(v, X_train, t_train, k=k)
-        for j in range(len(y)):
-            if t[j] != 0 and t[j] != 1:
+        user_id = X_new.iloc[i, 0]
+        t = t_new.iloc[i] # prediction target
+        y = predict_knn(user_id, X_train, t_train, k=k)
+
+        for j in range(len(t)):
+            if t.iloc[j] != 0 and t.iloc[j] != 1:
                 continue
             num_predictions += 1
-            if y[j] == t[j]:
+            if y[j] == t.iloc[j]:
                 num_correct += 1
 
     return num_correct / num_predictions
@@ -116,23 +119,23 @@ if __name__ == '__main__':
     test_data = pd.read_csv(test_data_path)
     test_target_data = pd.read_csv(test_target_path)
 
-    X_train = train_data.sort_values(by='user_id').drop(columns=['user_id']).values
-    t_train = train_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
+    X_train = train_data.sort_values(by='user_id')
+    t_train = train_target_data.sort_values(by='user_id')
 
-    X_valid = valid_data.sort_values(by='user_id').drop(columns=['user_id']).values
-    t_valid = valid_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
+    X_valid = valid_data.sort_values(by='user_id')
+    t_valid = valid_target_data.sort_values(by='user_id')
 
-    X_test = test_data.sort_values(by='user_id').drop(columns=['user_id']).values
-    t_test = test_target_data.sort_values(by='user_id').drop(columns=['user_id']).values
+    X_test = test_data.sort_values(by='user_id')
+    t_test = test_target_data.sort_values(by='user_id')
 
-    print('Train accuracy at k = 1 (should be 1): ')
-    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
-    print('Train accuracy at k = 250: ')
-    print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=250))
+    # print('Train accuracy at k = 1 (should be 1): ')
+    # print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=1))
+    # print('Train accuracy at k = 250: ')
+    # print(compute_accuracy(X_train, t_train, X_train=X_train, t_train=t_train, k=230))
     print('Validation accuracy at k = 250: ')
-    print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=250))
+    print(compute_accuracy(X_valid, t_valid, X_train=X_train, t_train=t_train, k=230))
     print('Test accuracy at k = 250: ')
-    print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=250))
+    print(compute_accuracy(X_test, t_test, X_train=X_train, t_train=t_train, k=230))
 
 
 
