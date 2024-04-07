@@ -100,10 +100,13 @@ class AutoEncoder(nn.Module):
 #     num_student = train_data.shape[0]
 #
 #     train_losses = []
+#     train_accuracies = []
 #     valid_accuracies = []
 #
 #     for epoch in range(0, num_epoch):
 #         train_loss = 0.
+#         correct = 0
+#         total = 0
 #
 #         for user_id in range(num_student):
 #             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
@@ -112,10 +115,16 @@ class AutoEncoder(nn.Module):
 #             optimizer.zero_grad()
 #             output = model(inputs)
 #
+#
 #             # Mask the target to only compute the gradient of valid entries.
 #             # nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
 #             nan_mask = np.isnan(train_data[user_id].numpy())
 #             target[0][nan_mask] = output[0][nan_mask]
+#             # print(train_data)
+#             # Training accuracy
+#             guess = output[0][~nan_mask].data.numpy() >= 0.5
+#             correct += np.sum(guess == train_data[user_id][~nan_mask].numpy())
+#             total += np.sum(~nan_mask)
 #
 #             loss = torch.sum((output - target) ** 2.)
 #             loss.backward()
@@ -130,13 +139,13 @@ class AutoEncoder(nn.Module):
 #         # test_acc = evaluate(model, zero_train_data, test_data)
 #         # print(test_acc)
 #
-#         train_losses.append(train_loss)
+#         train_accuracies.append(correct / float(total))
 #         valid_accuracies.append(valid_acc)
 #
-#     return train_losses, valid_accuracies
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
+#     return train_accuracies, valid_accuracies
+#     ####################################################################
+#     # END OF YOUR CODE                            #
+#     ####################################################################
 
 def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     """ Train the neural network, where the objective also includes
@@ -237,7 +246,7 @@ def main():
     # Try out 5 different k and select the best k using the             #
     # validation set.                                                   #
     #####################################################################
-    training_costs = {}
+    training_accuracies = {}
     validation_accuracies = {}
     test_accuracies = {}
     max = 0
@@ -259,11 +268,11 @@ def main():
         model = AutoEncoder(train_matrix.shape[1], k)
 
         # Set optimization hyperparameters.
-            #print("For k = {}".format(k))
-        train_losses, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
-              valid_data, num_epoch)
+        print("For k = {}".format(k))
+        train_accs, valid_accs = train(model, lr, lamb, train_matrix, zero_train_matrix,
+                                       valid_data, num_epoch)
 
-        training_costs[k] = train_losses
+        training_accuracies[k] = train_accs
         validation_accuracies[k] = valid_accs
         test_accuracies[k] = evaluate(model, zero_train_matrix, test_data)
         if validation_accuracies[k][-1] > max:
@@ -281,27 +290,27 @@ def main():
     # print("When number of epoch is: {}".format(max_num))
 
 
-    # Plotting
-    epochs = list(range(1, num_epoch + 1))
-    fig, axes = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
-
-    # Plot training cost
-    for k, costs in training_costs.items():
-        axes[0].plot(epochs, costs, marker='o', label=f'k={k}')
-    axes[0].set_title('Training Cost per Epoch')
-    axes[0].set_ylabel('Training Cost')
-    axes[0].legend()
-
-    # Plot validation accuracy
-    for k, accuracies in validation_accuracies.items():
-        axes[1].plot(epochs, accuracies, marker='o', label=f'k={k}')
-    axes[1].set_title('Validation Accuracy per Epoch')
-    axes[1].set_xlabel('Epoch')
-    axes[1].set_ylabel('Validation Accuracy')
-    axes[1].legend()
-
-    plt.tight_layout()
-    plt.show()
+    # # Plotting
+    # epochs = list(range(1, num_epoch + 1))
+    # fig, axes = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+    #
+    # # Plot training cost
+    # for k, costs in training_accuracies.items():
+    #     axes[0].plot(epochs, costs, marker='o', label=f'k={k}')
+    # axes[0].set_title('Training Accuracy per Epoch')
+    # axes[0].set_ylabel('Training Accuracy')
+    # axes[0].legend()
+    #
+    # # Plot validation accuracy
+    # for k, accuracies in validation_accuracies.items():
+    #     axes[1].plot(epochs, accuracies, marker='o', label=f'k={k}')
+    # axes[1].set_title('Validation Accuracy per Epoch')
+    # axes[1].set_xlabel('Epoch')
+    # axes[1].set_ylabel('Validation Accuracy')
+    # axes[1].legend()
+    #
+    # plt.tight_layout()
+    # plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
