@@ -1,6 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.impute import KNNImputer
+from torch import cosine_similarity
+
 from utils import *
 
 from utils import load_public_test_csv, load_train_sparse, load_valid_csv, \
@@ -45,7 +47,7 @@ def knn_impute_by_item(matrix, valid_data, k):
     # Part A 1(b)
     # Transpose the matrix so that the questions become the features
     # Transpose the matrix so that questions become the features
-    matrix_T = matrix.T
+    """matrix_T = matrix.T
 
     # Create a KNN imputer instance with the specified number of neighbors
     nbrs = KNNImputer(n_neighbors=k)
@@ -78,7 +80,24 @@ def knn_impute_by_item(matrix, valid_data, k):
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
+    return acc"""
+    # Transpose the matrix so questions are rows
+    item_matrix = np.transpose(matrix)
+
+    # Initialize the KNN imputer
+    nbrs = KNNImputer(n_neighbors=k)
+
+    # Impute missing values based on item similarity
+    imputed_matrix = nbrs.fit_transform(item_matrix)
+
+    # Transpose back so users are rows again for evaluation
+    imputed_matrix = np.transpose(imputed_matrix)
+
+    # Evaluate the accuracy using the sparse_matrix_evaluate function
+    acc = sparse_matrix_evaluate(valid_data, imputed_matrix)
+    print("Validation Accuracy: {}".format(acc))
     return acc
+
 
 
 def main():
@@ -99,12 +118,12 @@ def main():
 
     # Part A 1(a)
     # Define k values to test
-    k_values = [1, 6, 11, 16, 21, 26, 250]
+    k_values = [1, 6, 11, 16, 21, 26]
     user_validation_accuracies = []
 
     # Compute the validation accuracy for each k
     for k in k_values:
-        print(f"Testing k = {k}")
+        print(f"Tuning k = {k}")
         acc = knn_impute_by_user(sparse_matrix, val_data, k)
         user_validation_accuracies.append(acc)
 
@@ -129,7 +148,7 @@ def main():
     item_validation_accuracies = []
 
     for k in k_values:
-        print(f"Testing k = {k}")
+        print(f"Tuning k = {k}")
         acc = knn_impute_by_item(sparse_matrix, val_data, k)
         item_validation_accuracies.append(acc)
 
@@ -145,7 +164,7 @@ def main():
     print(f"Best k for item-based k-NN: {best_k}")
 
     # Report the test accuracy with the chosen k*
-    test_accuracy = knn_impute_by_user(sparse_matrix, test_data, best_k)
+    test_accuracy = knn_impute_by_item(sparse_matrix, test_data, best_k)
     print(
         f"Item-based Best k-NN Test Accuracy with k={best_k}: {test_accuracy}")
 
