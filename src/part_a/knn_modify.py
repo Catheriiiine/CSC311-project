@@ -106,12 +106,14 @@ def compute_accuracy(X_new, t_new, X_train, t_train, k=1):
     return num_correct / num_predictions
 
 if __name__ == '__main__':
-    train_data_path = '0.csv'
-    train_target_path = 'question_correctness.csv'
-    validation_data_path = '1.csv'
-    valid_target_path = 'question_correctness1.csv'
-    test_data_path = '2.csv'
-    test_target_path = 'question_correctness2.csv'
+    data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+
+    train_data_path = os.path.join(data_dir, "0.csv")
+    train_target_path = os.path.join(data_dir, "question_correctness.csv")
+    validation_data_path = os.path.join(data_dir, "1.csv")
+    valid_target_path = os.path.join(data_dir, 'question_correctness1.csv')
+    test_data_path = os.path.join(data_dir, "2.csv")
+    test_target_path = os.path.join(data_dir, 'question_correctness2.csv')
 
     train_data = pd.read_csv(train_data_path)
     train_target_data = pd.read_csv(train_target_path)
